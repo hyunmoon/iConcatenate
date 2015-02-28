@@ -51,11 +51,11 @@ Return
 ; -------------------------------------------------------------------------------------------
 SelectFIlesClicked:
 {
-	FileNames := ""
 	FileSelectFile, SelectedFiles, M3, , Choose images to concatenate, Image File(*.png; *.jpg;, *.bmp)
 
 	If (SelectedFiles != "")
 	{
+		FileNames := ""
 		Loop, parse, SelectedFiles, `n
 		{
 			if (A_Index == 1)
@@ -82,12 +82,13 @@ SelectFIlesClicked:
 ; -------------------------------------------------------------------------------------------
 GuiDropFiles:
 {
-	FileNames := ""
-	FileList := ""
-	
 	If (A_GuiEvent != "")
 	{
-		Loop, parse, A_GuiEvent, `n
+		FileNames := ""
+		FileList := A_GuiEvent
+		Sort, FileList ; sort in alphabetical order
+		
+		Loop, parse, FileList, `n
 		{
 			FileNames .= quoteMark
 			FileNames .= A_LoopField
@@ -95,7 +96,6 @@ GuiDropFiles:
 			FileNames .= A_Space
 				
 			SplitPath, A_LoopField, fileName
-			FileList .= "[" . A_Index . "] " . fileName . "`n"
 		}
 		
 		; For drag and drops, try to create image right away
@@ -111,23 +111,37 @@ ConcatenateClicked:
 {
 	if (FileNames = "")
 	{
+		SoundPlay *48
 		MsgBox, 0, Warning, Select images to concatenate!
 		Return
 	}
-	FileSelectFile, filename, S, ,Save, Image (*.png)
-	if (filename = "")
+	
+	FileSelectFile, saveFilePath, S, ,Save, Image (*.png)
+	if (saveFilePath = "")
 	{
 		Return
 	}
 	else
 	{
-		IfNotInString, filename, .
+		IfNotInString, saveFilePath, .
 		{
-			filename .= ".png"
+			saveFilePath .= ".png"
+		}
+		
+		IfExist, %saveFilePath%
+		{
+			SplitPath, saveFilePath, saveFileName ; take file name from the full path
+			
+			SoundPlay *48 ; ask before overwriting
+			MsgBox, 308, Confirm Save, %saveFileName% already exists.`nDo you want to replace it?
+			IfMsgBox, No
+			{
+				Return
+			}
 		}
 		
 		SaveFile := quoteMark
-		SaveFile .= filename
+		SaveFile .= saveFilePath
 		SaveFile .= quoteMark
 		
 		GuiControlGet, option, , RA1
@@ -218,27 +232,6 @@ GroupBox(GBvName			;Name for GroupBox control variable
 	Gui, Add, GroupBox, v%GBvName% x%minX% y%minY% w%GBW% h%GBH%, %Title%
 	
 	Return
-}
-
-; -------------------------------------------------------------------------------------------
-; User right-clicked on Gui (clicked with right mouse button)
-; -------------------------------------------------------------------------------------------
-GuiContextMenu:
-{
-	ToolTip, Convert.exe created by www.imagemagick.org`nUser interface created by Henry
-	Sleep, 4000
-	GoSub, RemoveToolTip
-	Return
-}
-
-; -------------------------------------------------------------------------------------------
-; Helper label to close tool tip
-; -------------------------------------------------------------------------------------------
-RemoveToolTip:
-{
-   ToolTip
-   SetTimer, RemoveToolTip, Off
-Return
 }
 
 ; -------------------------------------------------------------------------------------------
