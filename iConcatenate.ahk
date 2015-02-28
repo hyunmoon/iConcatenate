@@ -51,7 +51,7 @@ Return
 ; -------------------------------------------------------------------------------------------
 SelectFIlesClicked:
 {
-	FileSelectFile, SelectedFiles, M3, , Choose images to concatenate, Image File(*.png; *.jpg;, *.bmp)
+	FileSelectFile, SelectedFiles, M3, , Choose images to concatenate, Image File(*.png; *.jpg;, *.bmp; *.tif)
 
 	If (SelectedFiles != "")
 	{
@@ -85,6 +85,8 @@ GuiDropFiles:
 	If (A_GuiEvent != "")
 	{
 		FileNames := ""
+		FileDirectory := ""
+		
 		FileList := A_GuiEvent
 		Sort, FileList ; sort in alphabetical order
 		
@@ -95,7 +97,7 @@ GuiDropFiles:
 			FileNames .= quoteMark
 			FileNames .= A_Space
 				
-			SplitPath, A_LoopField, fileName
+			SplitPath, A_LoopField, fileName, FileDirectory
 		}
 		
 		; For drag and drops, try to create image right away
@@ -116,7 +118,7 @@ ConcatenateClicked:
 		Return
 	}
 	
-	FileSelectFile, saveFilePath, S, ,Save, Image (*.png)
+	FileSelectFile, saveFilePath, S, %FileDirectory%, Save, Image File(*.png; *.jpg;, *.bmp; *.tif)
 	if (saveFilePath = "")
 	{
 		Return
